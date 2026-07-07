@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart' as pv;
 import '../../data/mock_data.dart';
 import '../../models/provider_profile.dart';
+import '../../models/review.dart';
 import '../../state/app_state.dart';
 import '../../theme/app_colors.dart';
 import '../../models/zone.dart';
@@ -83,7 +84,8 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
             Switch(
               value: provider.isOpenForWork,
               activeTrackColor: AppColors.primaryGreen,
-              onChanged: (_) => setState(() {}),
+              onChanged: (v) =>
+                  app.updateProvider(provider.copyWith(isOpenForWork: v)),
             ),
           ]),
 
@@ -122,7 +124,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton.icon(
-                    onPressed: () => _showEditDescriptionSheet(context, provider),
+                    onPressed: () => _showEditDescriptionSheet(context, app, provider),
                     icon: const Icon(Icons.edit_outlined, size: 16),
                     label: const Text('Edit'),
                   ),
@@ -147,7 +149,10 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                     .withValues(alpha: 0.6)),
           ),
           const SizedBox(height: 10),
-          _ServiceAreaCard(provider: provider),
+          _ServiceAreaCard(
+            provider: provider,
+            onUpdate: (updated) => app.updateProvider(updated),
+          ),
           const SizedBox(height: 22),
 
           // Reviews
@@ -225,7 +230,8 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     );
   }
 
-  void _showEditDescriptionSheet(BuildContext context, ProviderProfile provider) {
+  void _showEditDescriptionSheet(
+      BuildContext context, AppState app, ProviderProfile provider) {
     final ctrl = TextEditingController(text: provider.businessDescription);
     showModalBottomSheet(
       context: context,
@@ -251,7 +257,14 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () => Navigator.of(ctx).pop(),
+                onPressed: () {
+                  final text = ctrl.text.trim();
+                  if (text.isNotEmpty) {
+                    app.updateProvider(
+                        provider.copyWith(businessDescription: text));
+                  }
+                  Navigator.of(ctx).pop();
+                },
                 child: const Text('Save'),
               ),
             ),
@@ -288,7 +301,27 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () => Navigator.of(ctx).pop(),
+                onPressed: () {
+                  final text = ctrl.text.trim();
+                  if (text.isNotEmpty) {
+                    final i =
+                        MockData.reviews.indexWhere((r) => r.id == reviewId);
+                    if (i != -1) {
+                      final r = MockData.reviews[i];
+                      MockData.reviews[i] = Review(
+                        id: r.id,
+                        providerId: r.providerId,
+                        consumerDisplayName: r.consumerDisplayName,
+                        stars: r.stars,
+                        comment: r.comment,
+                        createdAt: r.createdAt,
+                        providerResponse: text,
+                      );
+                      setState(() {});
+                    }
+                  }
+                  Navigator.of(ctx).pop();
+                },
                 child: const Text('Post'),
               ),
             ),
@@ -394,7 +427,8 @@ class _StatCard extends StatelessWidget {
 // ── Service Area Card ─────────────────────────────────────────────────────────
 class _ServiceAreaCard extends StatelessWidget {
   final ProviderProfile provider;
-  const _ServiceAreaCard({required this.provider});
+  final ValueChanged<ProviderProfile> onUpdate;
+  const _ServiceAreaCard({required this.provider, required this.onUpdate});
 
   String _zoneName(String id) {
     try {
@@ -529,6 +563,7 @@ class _ServiceAreaCard extends StatelessWidget {
                               ? null
                               : () {
                                   Navigator.pop(ctx2);
+                                  onUpdate(provider.copyWith(zone: newZone));
                                   ScaffoldMessenger.of(context)
                                       .showSnackBar(const SnackBar(
                                     content: Text(

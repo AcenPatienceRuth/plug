@@ -72,4 +72,13 @@ class AppState extends ChangeNotifier {
       return null;
     }
   }
+
+  /// Writes an updated provider profile back into MockData and notifies
+  /// listeners so the dashboard reflects the change immediately.
+  void updateProvider(ProviderProfile updated) {
+    final i = MockData.providers.indexWhere((p) => p.id == updated.id);
+    if (i == -1) return;
+    MockData.providers[i] = updated;
+    notifyListeners();
+  }
 }

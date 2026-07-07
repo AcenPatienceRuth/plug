@@ -69,7 +69,11 @@ class ProviderProfile {
     return tierBoost + ratingComponent + jobsComponent + responsivenessComponent;
   }
 
-  ProviderProfile copyWith({bool? isOpenForWork, String? businessDescription}) {
+  ProviderProfile copyWith({
+    bool? isOpenForWork,
+    String? businessDescription,
+    ZoneAddress? zone,
+  }) {
     return ProviderProfile(
       id: id,
       name: name,
@@ -78,7 +82,7 @@ class ProviderProfile {
       coverImageUrl: coverImageUrl,
       avatarUrl: avatarUrl,
       businessDescription: businessDescription ?? this.businessDescription,
-      zone: zone,
+      zone: zone ?? this.zone,
       ratingAverage: ratingAverage,
       ratingCount: ratingCount,
       completedJobs: completedJobs,
