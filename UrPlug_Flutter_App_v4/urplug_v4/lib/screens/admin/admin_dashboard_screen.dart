@@ -3,6 +3,7 @@ import '../../theme/app_colors.dart';
 import '../../data/mock_data.dart';
 import '../../models/provider_profile.dart';
 import '../../models/zone.dart';
+import '../../models/service_category.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -13,6 +14,8 @@ class AdminDashboardScreen extends StatefulWidget {
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   int _tab = 0;
+
+  void _goToTab(int i) => setState(() => _tab = i);
 
   @override
   Widget build(BuildContext context) {
@@ -60,25 +63,25 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(children: [
-              _AdminTab('Overview',   Icons.dashboard_outlined,     0, _tab, (i) => setState(() => _tab = i)),
-              _AdminTab('Verify',     Icons.verified_user_outlined, 1, _tab, (i) => setState(() => _tab = i)),
-              _AdminTab('Reviews',    Icons.rate_review_outlined,   2, _tab, (i) => setState(() => _tab = i)),
-              _AdminTab('Users',      Icons.people_outline,         3, _tab, (i) => setState(() => _tab = i)),
-              _AdminTab('Zones',      Icons.map_outlined,           4, _tab, (i) => setState(() => _tab = i)),
-              _AdminTab('Categories', Icons.category_outlined,      5, _tab, (i) => setState(() => _tab = i)),
+              _AdminTab('Overview',   Icons.dashboard_outlined,     0, _tab, _goToTab),
+              _AdminTab('Verify',     Icons.verified_user_outlined, 1, _tab, _goToTab),
+              _AdminTab('Reviews',    Icons.rate_review_outlined,   2, _tab, _goToTab),
+              _AdminTab('Users',      Icons.people_outline,         3, _tab, _goToTab),
+              _AdminTab('Zones',      Icons.map_outlined,           4, _tab, _goToTab),
+              _AdminTab('Categories', Icons.category_outlined,      5, _tab, _goToTab),
             ]),
           ),
         ),
         Expanded(
           child: IndexedStack(
             index: _tab,
-            children: const [
-              _OverviewTab(),
-              _VerificationQueueTab(),
-              _ReviewsTab(),
-              _UsersTab(),
-              _ZonesTab(),
-              _CategoriesTab(),
+            children: [
+              _OverviewTab(onNavigate: _goToTab),
+              const _VerificationQueueTab(),
+              const _ReviewsTab(),
+              const _UsersTab(),
+              const _ZonesTab(),
+              const _CategoriesTab(),
             ],
           ),
         ),
@@ -89,17 +92,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
 // ─── Overview ────────────────────────────────────────────────────────────────
 class _OverviewTab extends StatelessWidget {
-  const _OverviewTab();
+  final ValueChanged<int> onNavigate;
+  const _OverviewTab({required this.onNavigate});
 
   @override
   Widget build(BuildContext context) {
+    // (label, icon, description, target tab index — null means no tab yet)
     final sections = [
-      ('Verification Queue',  Icons.verified_user_outlined,  'Review Gold Tier document submissions'),
-      ('Review Moderation',   Icons.rate_review_outlined,    'Flag or remove abusive reviews'),
-      ('User Management',     Icons.people_outline,          'Suspend or remove accounts'),
-      ('Zone Configuration',  Icons.map_outlined,            'Add or edit administrative zones'),
-      ('Category Management', Icons.category_outlined,       'Add, edit, or remove service categories'),
-      ('Platform Analytics',  Icons.bar_chart_outlined,      'Views, chats, registrations over time'),
+      ('Verification Queue',  Icons.verified_user_outlined,  'Review Gold Tier document submissions', 1),
+      ('Review Moderation',   Icons.rate_review_outlined,    'Flag or remove abusive reviews', 2),
+      ('User Management',     Icons.people_outline,          'Suspend or remove accounts', 3),
+      ('Zone Configuration',  Icons.map_outlined,            'Add or edit administrative zones', 4),
+      ('Category Management', Icons.category_outlined,       'Add, edit, or remove service categories', 5),
+      ('Platform Analytics',  Icons.bar_chart_outlined,      'Views, chats, registrations over time', null),
     ];
 
     return ListView(
@@ -115,29 +120,44 @@ class _OverviewTab extends StatelessWidget {
           crossAxisSpacing: 10,
           childAspectRatio: 1.4,
           children: sections
-              .map((s) => Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Theme.of(context).dividerColor),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(s.$2, color: AppColors.primaryGreen, size: 22),
-                        const Spacer(),
-                        Text(s.$1,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w700, fontSize: 13)),
-                        const SizedBox(height: 3),
-                        Text(s.$3,
-                            style: TextStyle(
-                                fontSize: 11,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurface
-                                    .withValues(alpha: 0.55))),
-                      ],
+              .map((s) => InkWell(
+                    borderRadius: BorderRadius.circular(14),
+                    onTap: () {
+                      final targetTab = s.$4;
+                      if (targetTab != null) {
+                        onNavigate(targetTab);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text(
+                                  'Platform Analytics is not wired to a data source yet.')),
+                        );
+                      }
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Theme.of(context).dividerColor),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(s.$2, color: AppColors.primaryGreen, size: 22),
+                          const Spacer(),
+                          Text(s.$1,
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w700, fontSize: 13)),
+                          const SizedBox(height: 3),
+                          Text(s.$3,
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurface
+                                      .withValues(alpha: 0.55))),
+                        ],
+                      ),
                     ),
                   ))
               .toList(),
@@ -328,8 +348,16 @@ class _ReviewsTabState extends State<_ReviewsTab> {
 }
 
 // ─── Users ───────────────────────────────────────────────────────────────────
-class _UsersTab extends StatelessWidget {
+class _UsersTab extends StatefulWidget {
   const _UsersTab();
+
+  @override
+  State<_UsersTab> createState() => _UsersTabState();
+}
+
+class _UsersTabState extends State<_UsersTab> {
+  late final List<ProviderProfile> _providers = List.from(MockData.providers);
+  final Set<String> _suspendedIds = {};
 
   @override
   Widget build(BuildContext context) {
@@ -338,47 +366,114 @@ class _UsersTab extends StatelessWidget {
       children: [
         const _SectionHeader('Registered Providers'),
         const SizedBox(height: 10),
-        ...MockData.providers.map((p) => ListTile(
+        if (_providers.isEmpty)
+          const Center(
+              child: Padding(
+                  padding: EdgeInsets.all(40),
+                  child: Text('No providers left.')))
+        else
+          ..._providers.map((p) {
+            final suspended = _suspendedIds.contains(p.id);
+            return ListTile(
               leading: CircleAvatar(
-                backgroundColor: AppColors.primaryGreenLight,
+                backgroundColor: suspended
+                    ? AppColors.danger.withValues(alpha: 0.15)
+                    : AppColors.primaryGreenLight,
                 child: Text(p.name[0],
-                    style: const TextStyle(
-                        color: AppColors.primaryGreen,
+                    style: TextStyle(
+                        color: suspended
+                            ? AppColors.danger
+                            : AppColors.primaryGreen,
                         fontWeight: FontWeight.w700)),
               ),
               title: Text(p.name,
                   style: const TextStyle(fontWeight: FontWeight.w600)),
-              subtitle: Text(
-                  p.tier == ProviderTier.gold ? '⭐ Gold Verified' : 'Standard'),
+              subtitle: Text(suspended
+                  ? 'Suspended'
+                  : (p.tier == ProviderTier.gold
+                      ? '⭐ Gold Verified'
+                      : 'Standard')),
               trailing: PopupMenuButton<String>(
                 itemBuilder: (_) => [
-                  const PopupMenuItem(
-                      value: 'suspend', child: Text('Suspend account')),
+                  PopupMenuItem(
+                      value: 'suspend',
+                      child: Text(suspended
+                          ? 'Reinstate account'
+                          : 'Suspend account')),
                   const PopupMenuItem(
                       value: 'remove', child: Text('Remove account')),
                 ],
                 onSelected: (v) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text(
-                        '${v == 'suspend' ? 'Suspended' : 'Removed'}: ${p.name}'),
-                  ));
+                  if (v == 'suspend') {
+                    setState(() {
+                      if (suspended) {
+                        _suspendedIds.remove(p.id);
+                      } else {
+                        _suspendedIds.add(p.id);
+                      }
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text(
+                          '${suspended ? 'Reinstated' : 'Suspended'}: ${p.name}'),
+                    ));
+                  } else {
+                    setState(() {
+                      _providers.remove(p);
+                      _suspendedIds.remove(p.id);
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text('Removed: ${p.name}'),
+                    ));
+                  }
                 },
               ),
-            )),
+            );
+          }),
       ],
     );
   }
 }
 
 // ─── Zones ───────────────────────────────────────────────────────────────────
-class _ZonesTab extends StatelessWidget {
+class _ZonesTab extends StatefulWidget {
   const _ZonesTab();
 
   @override
-  Widget build(BuildContext context) {
-    // MockData.zones is List<Zone> — id, name, level, parentId
-    final zones = MockData.zones;
+  State<_ZonesTab> createState() => _ZonesTabState();
+}
 
+class _ZonesTabState extends State<_ZonesTab> {
+  late final List<Zone> _zones = List.from(MockData.zones);
+
+  Future<void> _addZone() async {
+    final zone = await showDialog<Zone>(
+      context: context,
+      builder: (_) => _ZoneFormDialog(existingZones: _zones),
+    );
+    if (zone == null) return;
+    setState(() => _zones.add(zone));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Added zone "${zone.name}".')));
+  }
+
+  Future<void> _editZone(Zone zone) async {
+    final updated = await showDialog<Zone>(
+      context: context,
+      builder: (_) => _ZoneFormDialog(existingZones: _zones, initial: zone),
+    );
+    if (updated == null) return;
+    setState(() {
+      final i = _zones.indexWhere((z) => z.id == zone.id);
+      if (i != -1) _zones[i] = updated;
+    });
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text('Updated "${updated.name}".')));
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -393,9 +488,8 @@ class _ZonesTab extends StatelessWidget {
                   Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
         ),
         const SizedBox(height: 14),
-        ...zones.map((z) {
-          // Build a readable subtitle from the Zone's level and parentId
-          final levelLabel = _levelLabel(z.level);
+        ..._zones.map((z) {
+          final levelLabel = zoneLevelLabel(z.level);
           final parentLabel =
               z.parentId != null ? ' › parent: ${z.parentId}' : '';
           return ListTile(
@@ -409,27 +503,18 @@ class _ZonesTab extends StatelessWidget {
                 style: const TextStyle(fontSize: 11.5)),
             trailing: IconButton(
               icon: const Icon(Icons.edit_outlined, size: 18),
-              onPressed: () {},
+              onPressed: () => _editZone(z),
             ),
           );
         }),
         const SizedBox(height: 10),
         OutlinedButton.icon(
-          onPressed: () {},
+          onPressed: _addZone,
           icon: const Icon(Icons.add),
           label: const Text('Add Zone'),
         ),
       ],
     );
-  }
-
-  String _levelLabel(ZoneLevel level) {
-    switch (level) {
-      case ZoneLevel.region:   return 'Region';
-      case ZoneLevel.district: return 'District';
-      case ZoneLevel.division: return 'Division / Sub-county';
-      case ZoneLevel.parish:   return 'Parish / Village';
-    }
   }
 
   IconData _levelIcon(ZoneLevel level) {
@@ -442,9 +527,160 @@ class _ZonesTab extends StatelessWidget {
   }
 }
 
+String zoneLevelLabel(ZoneLevel level) {
+  switch (level) {
+    case ZoneLevel.region:   return 'Region';
+    case ZoneLevel.district: return 'District';
+    case ZoneLevel.division: return 'Division / Sub-county';
+    case ZoneLevel.parish:   return 'Parish / Village';
+  }
+}
+
+/// The level a zone of [level] must be parented under, or null if it's
+/// top-level (regions have no parent).
+ZoneLevel? _parentLevelFor(ZoneLevel level) {
+  switch (level) {
+    case ZoneLevel.region:   return null;
+    case ZoneLevel.district: return ZoneLevel.region;
+    case ZoneLevel.division: return ZoneLevel.district;
+    case ZoneLevel.parish:   return ZoneLevel.division;
+  }
+}
+
+class _ZoneFormDialog extends StatefulWidget {
+  final List<Zone> existingZones;
+  final Zone? initial;
+  const _ZoneFormDialog({required this.existingZones, this.initial});
+
+  @override
+  State<_ZoneFormDialog> createState() => _ZoneFormDialogState();
+}
+
+class _ZoneFormDialogState extends State<_ZoneFormDialog> {
+  late final _nameController =
+      TextEditingController(text: widget.initial?.name ?? '');
+  late ZoneLevel _level = widget.initial?.level ?? ZoneLevel.parish;
+  String? _parentId = widget.initial?.parentId;
+
+  @override
+  Widget build(BuildContext context) {
+    final requiredParentLevel = _parentLevelFor(_level);
+    final parentOptions = requiredParentLevel == null
+        ? <Zone>[]
+        : widget.existingZones
+            .where((z) => z.level == requiredParentLevel)
+            .toList();
+
+    if (_parentId != null && !parentOptions.any((z) => z.id == _parentId)) {
+      _parentId = null;
+    }
+
+    return AlertDialog(
+      title: Text(widget.initial == null ? 'Add Zone' : 'Edit Zone'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: _nameController,
+              decoration: const InputDecoration(labelText: 'Zone name'),
+              autofocus: true,
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<ZoneLevel>(
+              initialValue: _level,
+              decoration: const InputDecoration(labelText: 'Level'),
+              items: ZoneLevel.values
+                  .map((l) => DropdownMenuItem(
+                      value: l, child: Text(zoneLevelLabel(l))))
+                  .toList(),
+              onChanged: (v) {
+                if (v == null) return;
+                setState(() => _level = v);
+              },
+            ),
+            const SizedBox(height: 16),
+            if (requiredParentLevel == null)
+              Text(
+                'Regions are top-level and have no parent.',
+                style: TextStyle(
+                    fontSize: 12, color: Theme.of(context).hintColor),
+              )
+            else
+              DropdownButtonFormField<String>(
+                initialValue: _parentId,
+                decoration: InputDecoration(
+                    labelText: 'Parent ${zoneLevelLabel(requiredParentLevel)}'),
+                items: parentOptions
+                    .map((z) =>
+                        DropdownMenuItem(value: z.id, child: Text(z.name)))
+                    .toList(),
+                onChanged: (v) => setState(() => _parentId = v),
+              ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            final name = _nameController.text.trim();
+            if (name.isEmpty) return;
+            if (requiredParentLevel != null && _parentId == null) return;
+            Navigator.of(context).pop(Zone(
+              id: widget.initial?.id ??
+                  'z_${DateTime.now().millisecondsSinceEpoch}',
+              name: name,
+              level: _level,
+              parentId: _parentId,
+            ));
+          },
+          child: const Text('Save'),
+        ),
+      ],
+    );
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+}
+
 // ─── Categories ──────────────────────────────────────────────────────────────
-class _CategoriesTab extends StatelessWidget {
+class _CategoriesTab extends StatefulWidget {
   const _CategoriesTab();
+
+  @override
+  State<_CategoriesTab> createState() => _CategoriesTabState();
+}
+
+class _CategoriesTabState extends State<_CategoriesTab> {
+  late final List<ServiceCategory> _categories =
+      List.from(DefaultCategories.all);
+
+  Future<void> _addCategory() async {
+    final category = await showDialog<ServiceCategory>(
+      context: context,
+      builder: (_) => _CategoryFormDialog(existing: _categories),
+    );
+    if (category == null) return;
+    setState(() => _categories.add(category));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Added category "${category.label}".')));
+  }
+
+  void _removeCategory(ServiceCategory category) {
+    setState(() => _categories.remove(category));
+    ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Removed "${category.label}".')));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -453,6 +689,22 @@ class _CategoriesTab extends StatelessWidget {
       children: [
         const _SectionHeader('Service Categories'),
         const SizedBox(height: 10),
+        ..._categories.map((c) => ListTile(
+              dense: true,
+              leading: Icon(c.icon, size: 20, color: AppColors.primaryGreen),
+              title: Text(c.label,
+                  style: const TextStyle(fontWeight: FontWeight.w600)),
+              subtitle:
+                  c.isSystemDefault ? const Text('Default category') : null,
+              trailing: c.isSystemDefault
+                  ? null
+                  : IconButton(
+                      icon: const Icon(Icons.delete_outline,
+                          size: 18, color: AppColors.danger),
+                      onPressed: () => _removeCategory(c),
+                    ),
+            )),
+        const SizedBox(height: 10),
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
@@ -460,22 +712,84 @@ class _CategoriesTab extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
           ),
           child: const Text(
-            'Categories are defined in service_category.dart.\n'
-            'To add a category: add a new ServiceCategory entry to '
-            'DefaultCategories.all with a unique id, label, and icon.\n\n'
-            'To promote an "Others" listing to its own category, identify '
-            'providers who registered under "others" and update their categoryId.',
+            'To promote an "Others" listing to its own category, add it '
+            'here, then update the categoryId of providers who registered '
+            'under "Others" to match.',
             style: TextStyle(fontSize: 13, height: 1.5),
           ),
         ),
         const SizedBox(height: 14),
         OutlinedButton.icon(
-          onPressed: () {},
+          onPressed: _addCategory,
           icon: const Icon(Icons.add),
           label: const Text('Add Category'),
         ),
       ],
     );
+  }
+}
+
+class _CategoryFormDialog extends StatefulWidget {
+  final List<ServiceCategory> existing;
+  const _CategoryFormDialog({required this.existing});
+
+  @override
+  State<_CategoryFormDialog> createState() => _CategoryFormDialogState();
+}
+
+class _CategoryFormDialogState extends State<_CategoryFormDialog> {
+  final _labelController = TextEditingController();
+  String? _error;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Add Category'),
+      content: TextField(
+        controller: _labelController,
+        autofocus: true,
+        decoration: InputDecoration(
+          labelText: 'Category label',
+          errorText: _error,
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            final label = _labelController.text.trim();
+            if (label.isEmpty) {
+              setState(() => _error = 'Enter a category name.');
+              return;
+            }
+            final id = label
+                .toLowerCase()
+                .trim()
+                .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+                .replaceAll(RegExp(r'^_+|_+$'), '');
+            if (widget.existing.any((c) => c.id == id)) {
+              setState(() => _error = 'A category with that name already exists.');
+              return;
+            }
+            Navigator.of(context).pop(ServiceCategory(
+              id: id,
+              label: label,
+              icon: Icons.category_outlined,
+            ));
+          },
+          child: const Text('Save'),
+        ),
+      ],
+    );
+  }
+
+  @override
+  void dispose() {
+    _labelController.dispose();
+    super.dispose();
   }
 }
 

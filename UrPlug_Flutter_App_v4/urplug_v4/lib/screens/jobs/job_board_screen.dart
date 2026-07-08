@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart' as pv;
 import '../../data/mock_data.dart';
+import '../../models/chat_and_jobs.dart';
 import '../../models/service_category.dart';
+import '../../state/app_state.dart';
 import '../../theme/app_colors.dart';
 import '../chat/chat_screen.dart';
 import '../provider/public_provider_profile_screen.dart';
@@ -203,7 +206,25 @@ class _JobBoardScreenState extends State<JobBoardScreen> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
+                      final description = descController.text.trim();
+                      if (description.isEmpty) {
+                        ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(
+                            content: Text('Describe the job before posting.')));
+                        return;
+                      }
+                      final app =
+                          pv.Provider.of<AppState>(context, listen: false);
+                      MockData.jobPosts.add(JobPost(
+                        id: 'j_${DateTime.now().millisecondsSinceEpoch}',
+                        consumerId: app.currentUser.id,
+                        categoryId: selectedCategory,
+                        description: description,
+                        zone: app.currentUser.homeZone ??
+                            MockData.consumerHomeZone,
+                        createdAt: DateTime.now(),
+                      ));
                       Navigator.of(ctx).pop();
+                      setState(() {});
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                             content: Text('Job posted successfully!')),

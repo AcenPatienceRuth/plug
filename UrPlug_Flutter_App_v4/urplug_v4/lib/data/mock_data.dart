@@ -62,7 +62,7 @@ class MockData {
     const Zone(id: 'div_nansana',   name: 'Nansana Town',    level: ZoneLevel.division, parentId: 'd_wakiso'),
     const Zone(id: 'div_entebbe',   name: 'Entebbe Municipality', level: ZoneLevel.division, parentId: 'd_wakiso'),
     const Zone(id: 'div_kira',      name: 'Kira Town',        level: ZoneLevel.division, parentId: 'd_wakiso'),
-    const Zone(id: 'div_makindye_s','Makindye-Ssabagabo', level: ZoneLevel.division, parentId: 'd_wakiso'),
+    const Zone(id: 'div_makindye_s', name: 'Makindye-Ssabagabo', level: ZoneLevel.division, parentId: 'd_wakiso'),
 
     // ── Divisions — Other major towns ─────────────────────────────────────
     const Zone(id: 'div_jinja_c',   name: 'Jinja Central',   level: ZoneLevel.division, parentId: 'd_jinja'),
